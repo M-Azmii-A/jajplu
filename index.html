@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jajpu – Jajanan Pulau</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">Jaj<span>pu</span></div>
+  <div class="nav-center">
+    <a href="#" class="active">Beranda</a>
+    <a href="#">Restoran</a>
+    <a href="#">Promo</a>
+    <a href="#">Lacak Pesanan</a>
+  </div>
+  <div class="nav-right" id="navRight">
+    <button class="btn-ghost" onclick="openModal('login')">Masuk</button>
+    <button class="btn-primary" onclick="openModal('register')">Daftar</button>
+    <button class="cart-btn" onclick="toggleCart()">🛒<span class="cart-badge" id="cartBadge">0</span></button>
+  </div>
+</nav>
+
+<!-- SEARCH -->
+<section class="search-section" style="padding-top:40px;">
+  <div class="search-bar">
+    <span>🔍</span>
+    <input type="text" id="searchInput" placeholder="Cari makanan atau restoran..." oninput="filterMenu()">
+    <button>Cari</button>
+  </div>
+</section>
+
+<!-- CATEGORIES -->
+<section class="section">
+  <div class="section-header"><div class="section-title">🍽️ Kategori</div></div>
+  <div class="categories" id="catList">
+    <button class="cat-chip active" onclick="filterCat('all',this)">🔥 Semua</button>
+    <button class="cat-chip" onclick="filterCat('nasi',this)">🍚 Nasi</button>
+    <button class="cat-chip" onclick="filterCat('mie',this)">🍜 Mie & Bakso</button>
+    <button class="cat-chip" onclick="filterCat('ayam',this)">🍗 Ayam</button>
+    <button class="cat-chip" onclick="filterCat('seafood',this)">🦐 Seafood</button>
+    <button class="cat-chip" onclick="filterCat('dessert',this)">🍰 Dessert</button>
+    <button class="cat-chip" onclick="filterCat('minuman',this)">🧋 Minuman</button>
+  </div>
+</section>
+
+<!-- RESTAURANTS -->
+<section class="section">
+  <div class="section-header">
+    <div class="section-title">🏪 Restoran Populer</div>
+    <a href="#" class="see-all">Lihat Semua →</a>
+  </div>
+  <div class="resto-grid">
+    <div class="resto-card" onclick="filterByResto('Bakso Pak Kumis', this)">
+      <div class="resto-img" style="background-image:url('https://images.unsplash.com/photo-1569050467447-ce54b3bbc37d?w=600&q=80')"><div class="resto-badge green">Buka</div></div>
+      <div class="resto-info">
+        <div class="resto-name">Bakso Pak Kumis</div>
+        <div class="resto-meta"><span><span class="star">⭐</span> 4.9</span></div>
+        <div class="tag-list"><span class="tag">Mie</span><span class="tag">Bakso</span><span class="tag">Halal</span></div>
+      </div>
+    </div>
+    <div class="resto-card" onclick="filterByResto('Ayam Geprek Juara', this)">
+      <div class="resto-img" style="background-image:url('https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=600&q=80')"><div class="resto-badge">Promo</div></div>
+      <div class="resto-info">
+        <div class="resto-name">Ayam Geprek Juara</div>
+        <div class="resto-meta"><span><span class="star">⭐</span> 4.8</span></div>
+        <div class="tag-list"><span class="tag">Ayam</span><span class="tag">Pedas</span><span class="tag">Nasi</span></div>
+      </div>
+    </div>
+    <div class="resto-card" onclick="filterByResto('Seafood 99', this)">
+      <div class="resto-img" style="background-image:url('https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=600&q=80')"><div class="resto-badge green">Buka</div></div>
+      <div class="resto-info">
+        <div class="resto-name">Seafood 99</div>
+        <div class="resto-meta"><span><span class="star">⭐</span> 4.6</span></div>
+        <div class="tag-list"><span class="tag">Seafood</span><span class="tag">Ikan</span><span class="tag">Udang</span></div>
+      </div>
+    </div>
+    <div class="resto-card" onclick="filterByResto('RM Minang', this)">
+      <div class="resto-img" style="background-image:url('https://images.unsplash.com/photo-1604329760661-e71dc83f8f26?w=600&q=80')"><div class="resto-badge green">Buka</div></div>
+      <div class="resto-info">
+        <div class="resto-name">RM Minang</div>
+        <div class="resto-meta"><span><span class="star">⭐</span> 4.9</span></div>
+        <div class="tag-list"><span class="tag">Nasi</span><span class="tag">Padang</span><span class="tag">Halal</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MENU ITEMS -->
+<section class="section" id="menuSection">
+  <div class="section-header">
+    <div class="section-title">🍴 Menu Populer</div>
+    <a href="#" class="see-all">Lihat Semua →</a>
+  </div>
+  <div class="food-grid" id="foodGrid"></div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <div class="logo" style="font-size:1.3rem">Jaj<span style="color:var(--red)">pu</span></div>
+      <p>Jajanan Pulau – Platform pesan antar makanan terpercaya. Ribuan pilihan, pengiriman cepat, harga terjangkau.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Perusahaan</h4>
+      <a href="#">Tentang Kami</a>
+      <a href="#">Karir</a>
+      <a href="#">Blog</a>
+      <a href="#">Press</a>
+    </div>
+    <div class="footer-col">
+      <h4>Bantuan</h4>
+      <a href="#">FAQ</a>
+      <a href="#">Hubungi Kami</a>
+      <a href="#">Syarat & Ketentuan</a>
+      <a href="#">Kebijakan Privasi</a>
+    </div>
+    <div class="footer-col">
+      <h4>Mitra</h4>
+      <a href="#">Daftar Restoran</a>
+      <a href="#">Jadi Kurir</a>
+      <a href="#">Investor</a>
+      <a href="#">Advertise</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2025 Jajpu – Jajanan Pulau. All rights reserved.</span>
+    <span>Made with ❤️ in Indonesia</span>
+  </div>
+</footer>
+
+<!-- CART PANEL -->
+<div class="cart-overlay" id="cartOverlay" onclick="handleOverlayClick(event)">
+  <div class="cart-panel" id="cartPanel">
+    <div class="cart-header">
+      <div class="cart-title">🛒 Keranjang</div>
+      <button class="close-btn" onclick="toggleCart()">✕</button>
+    </div>
+    <div class="cart-items" id="cartItems"></div>
+    <div class="cart-footer" id="cartFooter"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"><span class="t-emoji">✅</span><span id="toastMsg"></span></div>
+
+<!-- AUTH MODAL -->
+<div class="modal-overlay" id="authOverlay" onclick="handleAuthOverlayClick(event)">
+  <div class="modal" id="authModal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+
+    <!-- LOGIN -->
+    <div id="loginForm">
+      <div class="modal-logo">Jaj<span>pu</span></div>
+      <div class="modal-title">Selamat Datang!</div>
+      <div class="modal-sub">Masuk ke akun Jajpu kamu</div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="loginEmail" placeholder="email@kamu.com">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="loginPassword" placeholder="••••••••">
+      </div>
+      <div id="loginError" class="form-error"></div>
+      <button class="form-btn" onclick="doLogin()">Masuk</button>
+      <div class="form-switch">Belum punya akun? <span onclick="switchModal('register')">Daftar sekarang</span></div>
+    </div>
+
+    <!-- PILIH JENIS AKUN -->
+    <div id="registerForm" style="display:none">
+      <div class="modal-logo">Jaj<span>pu</span></div>
+      <div class="modal-title">Daftar Sebagai</div>
+      <div class="modal-sub">Pilih jenis akun yang sesuai</div>
+      <div class="role-cards">
+        <div class="role-card" onclick="switchModal('registerBuyer')">
+          <div class="role-icon">🛍️</div>
+          <div class="role-label">Pembeli</div>
+          <div class="role-desc">Pesan makanan favoritmu dari berbagai restoran</div>
+        </div>
+        <div class="role-card" onclick="switchModal('registerSeller')">
+          <div class="role-icon">🏪</div>
+          <div class="role-label">Penjual</div>
+          <div class="role-desc">Daftarkan restoranmu dan mulai berjualan</div>
+        </div>
+      </div>
+      <div class="form-switch" style="margin-top:20px">Sudah punya akun? <span onclick="switchModal('login')">Masuk di sini</span></div>
+    </div>
+
+    <!-- REGISTER PEMBELI -->
+    <div id="registerBuyerForm" style="display:none">
+      <div class="modal-logo">Jaj<span>pu</span></div>
+      <div class="modal-title">Daftar Pembeli</div>
+      <div class="modal-sub">Buat akun dan mulai memesan</div>
+      <div class="form-group">
+        <label>Nama Lengkap</label>
+        <input type="text" id="regName" placeholder="Nama kamu">
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="regEmail" placeholder="email@kamu.com">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="regPassword" placeholder="Min. 6 karakter">
+      </div>
+      <div id="registerError" class="form-error"></div>
+      <button class="form-btn" onclick="doRegister()">Buat Akun</button>
+      <div class="form-switch">Kembali? <span onclick="switchModal('register')">Pilih jenis akun</span></div>
+    </div>
+
+    <!-- REGISTER PENJUAL -->
+    <div id="registerSellerForm" style="display:none">
+      <div class="modal-logo">Jaj<span>pu</span></div>
+      <div class="modal-title">Daftar Penjual</div>
+      <div class="modal-sub">Buka lapak restoranmu di Jajpu</div>
+      <div class="form-group">
+        <label>Nama Pemilik</label>
+        <input type="text" id="sellerName" placeholder="Nama lengkap pemilik">
+      </div>
+      <div class="form-group">
+        <label>Nama Restoran</label>
+        <input type="text" id="sellerResto" placeholder="Nama restoran / warung">
+      </div>
+      <div class="form-group">
+        <label>Kategori</label>
+        <select id="sellerCat">
+          <option value="">-- Pilih Kategori --</option>
+          <option value="nasi">🍚 Nasi</option>
+          <option value="mie">🍜 Mie & Bakso</option>
+          <option value="ayam">🍗 Ayam</option>
+          <option value="seafood">🦐 Seafood</option>
+          <option value="dessert">🍰 Dessert</option>
+          <option value="minuman">🧋 Minuman</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="sellerEmail" placeholder="email@restoran.com">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="sellerPassword" placeholder="Min. 6 karakter">
+      </div>
+      <div id="sellerError" class="form-error"></div>
+      <button class="form-btn" onclick="doRegisterSeller()">Daftarkan Restoran</button>
+      <div class="form-switch">Kembali? <span onclick="switchModal('register')">Pilih jenis akun</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- SELLER DASHBOARD MODAL -->
+<div class="modal-overlay" id="sellerOverlay" onclick="handleSellerOverlayClick(event)">
+  <div class="modal modal-wide" id="sellerModal">
+    <button class="modal-close" onclick="closeSellerDashboard()">✕</button>
+    <div class="seller-dash-header">
+      <div>
+        <div class="modal-logo">Jaj<span>pu</span> <span class="seller-tag">Penjual</span></div>
+        <div class="modal-title" id="sellerDashTitle">Dashboard Restoran</div>
+        <div class="modal-sub" id="sellerDashSub"></div>
+      </div>
+    </div>
+
+    <!-- TAB NAV -->
+    <div class="dash-tabs">
+      <button class="dash-tab active" onclick="switchDashTab('menu', this)">🍽️ Menu Saya</button>
+      <button class="dash-tab" onclick="switchDashTab('add', this)">➕ Tambah Menu</button>
+    </div>
+
+    <!-- TAB: MENU LIST -->
+    <div id="dashMenuTab">
+      <div id="sellerMenuList"></div>
+    </div>
+
+    <!-- TAB: ADD MENU -->
+    <div id="dashAddTab" style="display:none">
+      <div class="form-group">
+        <label>Nama Menu</label>
+        <input type="text" id="newMenuName" placeholder="Contoh: Bakso Spesial Jumbo">
+      </div>
+      <div class="form-group">
+        <label>Foto Makanan</label>
+        <div class="img-upload-box" id="imgUploadBox" onclick="document.getElementById('newMenuFile').click()">
+          <div class="img-upload-preview" id="imgPreviewWrap" style="display:none">
+            <img id="imgPreview" src="" alt="Preview">
+            <button class="img-remove-btn" onclick="removeUploadedImg(event)">✕</button>
+          </div>
+          <div class="img-upload-placeholder" id="imgUploadPlaceholder">
+            <div class="img-upload-icon">📷</div>
+            <div class="img-upload-text">Klik untuk upload foto</div>
+            <div class="img-upload-sub">JPG, PNG, WEBP — maks. 5MB</div>
+          </div>
+        </div>
+        <input type="file" id="newMenuFile" accept="image/*" style="display:none" onchange="handleImgUpload(event)">
+        <div class="img-divider"><span>atau pakai URL</span></div>
+        <input type="url" id="newMenuImg" placeholder="https://... (opsional)">
+      </div>
+      <div class="form-group">
+        <label>Harga (Rp)</label>
+        <input type="number" id="newMenuPrice" placeholder="Contoh: 25000" min="0">
+      </div>
+      <div id="addMenuError" class="form-error"></div>
+      <button class="form-btn" onclick="doAddMenu()">Tambahkan ke Menu</button>
+    </div>
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
