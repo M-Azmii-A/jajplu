@@ -15,8 +15,6 @@
   <div class="nav-center">
     <a href="#" class="active">Beranda</a>
     <a href="#">Restoran</a>
-    <a href="#">Promo</a>
-    <a href="#">Lacak Pesanan</a>
   </div>
   <div class="nav-right" id="navRight">
     <button class="btn-ghost" onclick="openModal('login')">Masuk</button>
@@ -160,8 +158,11 @@
       <div class="modal-title">Selamat Datang!</div>
       <div class="modal-sub">Masuk ke akun Jajpu kamu</div>
       <div class="form-group">
-        <label>Email</label>
-        <input type="email" id="loginEmail" placeholder="email@kamu.com">
+        <label>No. Telepon</label>
+        <div class="phone-input">
+          <span class="phone-prefix">🇮🇩 +62</span>
+          <input type="tel" id="loginPhone" placeholder="812 3456 7890" maxlength="14">
+        </div>
       </div>
       <div class="form-group">
         <label>Password</label>
@@ -202,8 +203,11 @@
         <input type="text" id="regName" placeholder="Nama kamu">
       </div>
       <div class="form-group">
-        <label>Email</label>
-        <input type="email" id="regEmail" placeholder="email@kamu.com">
+        <label>No. Telepon</label>
+        <div class="phone-input">
+          <span class="phone-prefix">🇮🇩 +62</span>
+          <input type="tel" id="regPhone" placeholder="812 3456 7890" maxlength="14">
+        </div>
       </div>
       <div class="form-group">
         <label>Password</label>
@@ -240,8 +244,11 @@
         </select>
       </div>
       <div class="form-group">
-        <label>Email</label>
-        <input type="email" id="sellerEmail" placeholder="email@restoran.com">
+        <label>No. Telepon Pemilik</label>
+        <div class="phone-input">
+          <span class="phone-prefix">🇮🇩 +62</span>
+          <input type="tel" id="sellerPhone" placeholder="812 3456 7890" maxlength="14">
+        </div>
       </div>
       <div class="form-group">
         <label>Password</label>
@@ -307,6 +314,74 @@
       <div id="addMenuError" class="form-error"></div>
       <button class="form-btn" onclick="doAddMenu()">Tambahkan ke Menu</button>
     </div>
+  </div>
+</div>
+
+<!-- EDIT PROFIL MODAL -->
+<div class="modal-overlay" id="profileOverlay" onclick="handleProfileOverlayClick(event)">
+  <div class="modal" id="profileModal">
+    <button class="modal-close" onclick="closeProfileModal()">✕</button>
+    <div class="modal-logo">Jaj<span>pu</span></div>
+    <div class="modal-title">Edit Profil</div>
+    <div class="modal-sub" id="profileSub"></div>
+    <div class="form-group">
+      <label>Nama Lengkap</label>
+      <input type="text" id="profileName" placeholder="Nama kamu">
+    </div>
+    <div class="form-group">
+      <label>No. Telepon</label>
+      <div class="phone-input">
+        <span class="phone-prefix">🇮🇩 +62</span>
+        <input type="tel" id="profilePhone" placeholder="812 3456 7890" maxlength="14" disabled>
+      </div>
+      <small style="color:var(--muted);font-size:.75rem;margin-top:4px;display:block">No. telepon tidak dapat diubah</small>
+    </div>
+    <div class="form-group">
+      <label>Alamat Utama</label>
+      <textarea id="profileAddress" placeholder="Jl. Contoh No. 1, Kelurahan, Kecamatan, Kota" rows="3"></textarea>
+    </div>
+    <div class="form-group">
+      <label>Password Baru <span style="color:var(--muted);font-weight:400">(kosongkan jika tidak ingin ubah)</span></label>
+      <input type="password" id="profilePassword" placeholder="Min. 6 karakter">
+    </div>
+    <div id="profileError" class="form-error"></div>
+    <button class="form-btn" onclick="saveProfile()">Simpan Perubahan</button>
+  </div>
+</div>
+
+<!-- CHECKOUT MODAL -->
+<div class="modal-overlay" id="checkoutOverlay" onclick="handleCheckoutOverlayClick(event)">
+  <div class="modal" id="checkoutModal">
+    <button class="modal-close" onclick="closeCheckoutModal()">✕</button>
+    <div class="modal-logo">Jaj<span>pu</span></div>
+    <div class="modal-title">Konfirmasi Pesanan</div>
+    <div class="modal-sub">Lengkapi detail pengiriman</div>
+
+    <!-- Ringkasan pesanan -->
+    <div class="checkout-summary" id="checkoutSummary"></div>
+
+    <div class="form-group" style="margin-top:16px">
+      <label>Nama Penerima</label>
+      <input type="text" id="checkoutName" placeholder="Nama lengkap penerima">
+    </div>
+    <div class="form-group">
+      <label>No. Telepon Penerima</label>
+      <div class="phone-input">
+        <span class="phone-prefix">🇮🇩 +62</span>
+        <input type="tel" id="checkoutPhone" placeholder="812 3456 7890" maxlength="14">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Alamat Tujuan Pengiriman</label>
+      <textarea id="checkoutAddress" placeholder="Jl. Contoh No. 1, Kelurahan, Kecamatan, Kota" rows="3"></textarea>
+    </div>
+    <div class="form-group">
+      <label>Catatan untuk Penjual <span style="color:var(--muted);font-weight:400">(opsional)</span></label>
+      <input type="text" id="checkoutNote" placeholder="Contoh: Tidak pakai bawang, level pedas sedang...">
+    </div>
+    <div id="checkoutError" class="form-error"></div>
+    <div class="checkout-total-row" id="checkoutTotalRow"></div>
+    <button class="form-btn" onclick="doCheckout()" style="margin-top:12px">✅ Konfirmasi & Pesan</button>
   </div>
 </div>
 
