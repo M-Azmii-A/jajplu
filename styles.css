@@ -247,7 +247,26 @@ nav {
 .role-label { font-family: 'Syne', sans-serif; font-weight: 700; font-size: .95rem; margin-bottom: 4px; }
 .role-desc { color: var(--muted); font-size: .75rem; line-height: 1.4; }
 
-/* SELECT INPUT */
+/* PHONE INPUT */
+.phone-input {
+  display: flex; align-items: center;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 10px; overflow: hidden; transition: border-color .2s;
+}
+.phone-input:focus-within { border-color: var(--red); }
+.phone-prefix {
+  padding: 11px 12px; font-size: .88rem; font-weight: 600;
+  color: var(--muted); background: var(--surface2);
+  border-right: 1px solid var(--border); white-space: nowrap; flex-shrink: 0;
+}
+.phone-input input {
+  border: none; border-radius: 0; background: transparent;
+  padding: 11px 12px; flex: 1;
+}
+.phone-input input:focus { border: none; }
+
+/* FORM GROUP override for phone */
+.form-group .phone-input input { width: 100%; }
 .form-group select {
   width: 100%; background: var(--surface2); border: 1px solid var(--border);
   border-radius: 10px; padding: 11px 14px; color: var(--text);
@@ -319,6 +338,35 @@ nav {
 .smi-price { color: var(--red); font-size: .82rem; font-weight: 700; }
 .smi-del { background: none; border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; cursor: pointer; font-size: .9rem; transition: all .2s; color: var(--muted); }
 .smi-del:hover { border-color: #ff6b6b; background: rgba(255,59,59,0.08); }
+
+/* TEXTAREA */
+.form-group textarea {
+  width: 100%; background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 10px; padding: 11px 14px; color: var(--text);
+  font-family: inherit; font-size: .95rem; outline: none;
+  transition: border-color .2s; resize: vertical; min-height: 80px;
+}
+.form-group textarea:focus { border-color: var(--red); }
+.form-group textarea::placeholder { color: var(--muted); }
+
+/* CHECKOUT SUMMARY */
+.checkout-summary {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 10px; padding: 12px 14px; margin-bottom: 4px;
+}
+.co-summary-list { display: flex; flex-direction: column; gap: 6px; }
+.co-summary-item {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: .875rem;
+}
+.co-item-name { color: var(--text); }
+.co-item-qty  { color: var(--muted); font-size: .8rem; margin-left: 4px; }
+.co-item-price { color: var(--red); font-weight: 600; font-size: .875rem; white-space: nowrap; }
+.checkout-total-row { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); }
+
+/* USER BADGE hover effect */
+.user-badge { transition: border-color .2s, background .2s; }
+.user-badge:hover { border-color: var(--red); background: var(--surface); }
 
 /* =====================
    FOOTER
