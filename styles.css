@@ -179,14 +179,16 @@ nav {
 .modal-overlay {
   position: fixed; inset: 0; background: rgba(0,0,0,0.7);
   z-index: 400; display: none; opacity: 0; transition: opacity .28s;
-  align-items: center; justify-content: center;
+  align-items: flex-start; justify-content: center;
+  padding: 24px 16px; overflow-y: auto;
 }
 .modal-overlay.open { display: flex; }
 .modal-overlay.visible { opacity: 1; }
 .modal {
   background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
-  padding: 36px 32px; width: 100%; max-width: 400px; position: relative;
+  padding: 36px 32px 40px; width: 100%; max-width: 420px; position: relative;
   transform: translateY(20px); transition: transform .28s cubic-bezier(0.4,0,0.2,1);
+  max-height: 92vh; overflow-y: auto; margin: auto;
 }
 .modal-overlay.visible .modal { transform: translateY(0); }
 .modal-close {
