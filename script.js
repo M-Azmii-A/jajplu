@@ -156,14 +156,132 @@ function changeQty(id, delta) {
 }
 
 // =====================
-// CART: CHECKOUT
+// CART: CHECKOUT → buka modal alamat
 // =====================
 function checkout() {
+  if (!currentUser) {
+    toggleCart();
+    openModal('login');
+    showToast('⚠️ Silakan masuk dulu untuk memesan');
+    return;
+  }
+  openCheckoutModal();
+}
+
+// =====================
+// CHECKOUT MODAL
+// =====================
+function openCheckoutModal() {
+  const overlay = document.getElementById('checkoutOverlay');
+  overlay.classList.add('open');
+  requestAnimationFrame(() => overlay.classList.add('visible'));
+
+  // Pre-fill dari profil
+  document.getElementById('checkoutName').value    = currentUser.name || '';
+  document.getElementById('checkoutPhone').value   = (currentUser.phone || '').replace(/^62/, '');
+  document.getElementById('checkoutAddress').value = currentUser.address || '';
+  document.getElementById('checkoutNote').value    = '';
+  document.getElementById('checkoutError').textContent = '';
+
+  // Render ringkasan
+  const items    = Object.values(cart);
+  const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0);
+  document.getElementById('checkoutSummary').innerHTML = `
+    <div class="co-summary-list">
+      ${items.map(i => `
+        <div class="co-summary-item">
+          <span class="co-item-name">${i.name} <span class="co-item-qty">×${i.qty}</span></span>
+          <span class="co-item-price">${formatRupiah(i.price * i.qty)}</span>
+        </div>`).join('')}
+    </div>`;
+  document.getElementById('checkoutTotalRow').innerHTML = `
+    <div class="cart-row total"><span>Total Pembayaran</span><span>${formatRupiah(subtotal)}</span></div>`;
+}
+
+function closeCheckoutModal() {
+  const overlay = document.getElementById('checkoutOverlay');
+  overlay.classList.remove('visible');
+  setTimeout(() => overlay.classList.remove('open'), 280);
+}
+
+function handleCheckoutOverlayClick(e) {
+  if (e.target === document.getElementById('checkoutOverlay')) closeCheckoutModal();
+}
+
+function doCheckout() {
+  const name    = document.getElementById('checkoutName').value.trim();
+  const phone   = document.getElementById('checkoutPhone').value.trim();
+  const address = document.getElementById('checkoutAddress').value.trim();
+  const errEl   = document.getElementById('checkoutError');
+
+  if (!name)    { errEl.textContent = 'Nama penerima wajib diisi.'; return; }
+  if (!phone)   { errEl.textContent = 'No. telepon penerima wajib diisi.'; return; }
+  if (!address) { errEl.textContent = 'Alamat tujuan wajib diisi.'; return; }
+  if (address.length < 10) { errEl.textContent = 'Alamat terlalu singkat, mohon lengkapi.'; return; }
+
+  // Simpan alamat ke profil jika belum ada
+  if (!currentUser.address) {
+    currentUser.address = address;
+    const idx = users.findIndex(u => u.phone === currentUser.phone);
+    if (idx !== -1) users[idx] = currentUser;
+    saveUsers();
+    saveSession(currentUser);
+  }
+
   cart = {};
   updateCartBadge();
   renderCartPanel();
-  toggleCart();
-  showToast('🎉 Pesanan berhasil dibuat!');
+  closeCheckoutModal();
+  showToast('🎉 Pesanan berhasil! Dikirim ke: ' + address.substring(0, 30) + '...');
+}
+
+// =====================
+// EDIT PROFIL
+// =====================
+function openProfileModal() {
+  if (!currentUser) return;
+  const overlay = document.getElementById('profileOverlay');
+  overlay.classList.add('open');
+  requestAnimationFrame(() => overlay.classList.add('visible'));
+
+  document.getElementById('profileSub').textContent    = displayPhone(currentUser.phone);
+  document.getElementById('profileName').value         = currentUser.name || '';
+  document.getElementById('profilePhone').value        = (currentUser.phone || '').replace(/^62/, '');
+  document.getElementById('profileAddress').value      = currentUser.address || '';
+  document.getElementById('profilePassword').value     = '';
+  document.getElementById('profileError').textContent  = '';
+}
+
+function closeProfileModal() {
+  const overlay = document.getElementById('profileOverlay');
+  overlay.classList.remove('visible');
+  setTimeout(() => overlay.classList.remove('open'), 280);
+}
+
+function handleProfileOverlayClick(e) {
+  if (e.target === document.getElementById('profileOverlay')) closeProfileModal();
+}
+
+function saveProfile() {
+  const name     = document.getElementById('profileName').value.trim();
+  const address  = document.getElementById('profileAddress').value.trim();
+  const password = document.getElementById('profilePassword').value;
+  const errEl    = document.getElementById('profileError');
+
+  if (!name) { errEl.textContent = 'Nama tidak boleh kosong.'; return; }
+  if (password && password.length < 6) { errEl.textContent = 'Password baru minimal 6 karakter.'; return; }
+
+  currentUser.name    = name;
+  currentUser.address = address;
+  if (password) currentUser.password = password;
+
+  const idx = users.findIndex(u => u.phone === currentUser.phone);
+  if (idx !== -1) users[idx] = currentUser;
+  saveUsers();
+  saveSession(currentUser);
+  updateAuthNav();
+  closeProfileModal();
+  showToast('✅ Profil berhasil diperbarui!');
 }
 
 // =====================
@@ -207,6 +325,25 @@ function saveSession(user) { currentUser = user; localStorage.setItem('jajpu_ses
 function clearSession() { currentUser = null; localStorage.removeItem('jajpu_session'); }
 
 // =====================
+// AUTH: PHONE UTILS
+// =====================
+// Normalisasi: hapus spasi/strip, ubah awalan 0 → 62
+function normalizePhone(raw) {
+  let d = raw.replace(/[\s\-().]/g, '');
+  if (d.startsWith('0')) d = '62' + d.slice(1);
+  if (d.startsWith('+')) d = d.slice(1);
+  return d;
+}
+function isValidPhone(normalized) {
+  return /^62\d{8,13}$/.test(normalized);
+}
+function displayPhone(normalized) {
+  // Format: +62 812-3456-7890
+  const local = normalized.replace(/^62/, '');
+  return '+62 ' + local.replace(/(\d{3,4})(\d{4})(\d{0,4})/, '$1-$2-$3').replace(/-$/, '');
+}
+
+// =====================
 // AUTH: MODAL
 // =====================
 function openModal(type) {
@@ -246,12 +383,13 @@ function switchModal(type) {
 // AUTH: LOGIN
 // =====================
 function doLogin() {
-  const email    = document.getElementById('loginEmail').value.trim();
+  const phone    = normalizePhone(document.getElementById('loginPhone').value.trim());
   const password = document.getElementById('loginPassword').value;
   const errEl    = document.getElementById('loginError');
-  if (!email || !password) { errEl.textContent = 'Email dan password wajib diisi.'; return; }
-  const user = users.find(u => u.email === email && u.password === password);
-  if (!user) { errEl.textContent = 'Email atau password salah.'; return; }
+  if (!phone || !password) { errEl.textContent = 'No. telepon dan password wajib diisi.'; return; }
+  if (!isValidPhone(phone)) { errEl.textContent = 'Format no. telepon tidak valid.'; return; }
+  const user = users.find(u => u.phone === phone && u.password === password);
+  if (!user) { errEl.textContent = 'No. telepon atau password salah.'; return; }
   saveSession(user);
   updateAuthNav();
   closeModal();
@@ -263,13 +401,14 @@ function doLogin() {
 // =====================
 function doRegister() {
   const name     = document.getElementById('regName').value.trim();
-  const email    = document.getElementById('regEmail').value.trim();
+  const phone    = normalizePhone(document.getElementById('regPhone').value.trim());
   const password = document.getElementById('regPassword').value;
   const errEl    = document.getElementById('registerError');
-  if (!name || !email || !password) { errEl.textContent = 'Semua field wajib diisi.'; return; }
-  if (password.length < 6)          { errEl.textContent = 'Password minimal 6 karakter.'; return; }
-  if (users.find(u => u.email === email)) { errEl.textContent = 'Email sudah terdaftar.'; return; }
-  const newUser = { name, email, password, role: 'buyer' };
+  if (!name || !phone || !password) { errEl.textContent = 'Semua field wajib diisi.'; return; }
+  if (!isValidPhone(phone))          { errEl.textContent = 'Format no. telepon tidak valid (min. 9 digit).'; return; }
+  if (password.length < 6)           { errEl.textContent = 'Password minimal 6 karakter.'; return; }
+  if (users.find(u => u.phone === phone)) { errEl.textContent = 'No. telepon sudah terdaftar.'; return; }
+  const newUser = { name, phone, password, role: 'buyer' };
   users.push(newUser);
   saveUsers();
   saveSession(newUser);
@@ -285,13 +424,14 @@ function doRegisterSeller() {
   const name     = document.getElementById('sellerName').value.trim();
   const resto    = document.getElementById('sellerResto').value.trim();
   const cat      = document.getElementById('sellerCat').value;
-  const email    = document.getElementById('sellerEmail').value.trim();
+  const phone    = normalizePhone(document.getElementById('sellerPhone').value.trim());
   const password = document.getElementById('sellerPassword').value;
   const errEl    = document.getElementById('sellerError');
-  if (!name || !resto || !cat || !email || !password) { errEl.textContent = 'Semua field wajib diisi.'; return; }
-  if (password.length < 6) { errEl.textContent = 'Password minimal 6 karakter.'; return; }
-  if (users.find(u => u.email === email)) { errEl.textContent = 'Email sudah terdaftar.'; return; }
-  const newUser = { name, email, password, role: 'seller', restoName: resto, restoCat: cat, menu: [] };
+  if (!name || !resto || !cat || !phone || !password) { errEl.textContent = 'Semua field wajib diisi.'; return; }
+  if (!isValidPhone(phone))  { errEl.textContent = 'Format no. telepon tidak valid (min. 9 digit).'; return; }
+  if (password.length < 6)   { errEl.textContent = 'Password minimal 6 karakter.'; return; }
+  if (users.find(u => u.phone === phone)) { errEl.textContent = 'No. telepon sudah terdaftar.'; return; }
+  const newUser = { name, phone, password, role: 'seller', restoName: resto, restoCat: cat, menu: [] };
   users.push(newUser);
   saveUsers();
   saveSession(newUser);
@@ -320,7 +460,9 @@ function updateAuthNav() {
       ? `<button class="btn-seller" onclick="openSellerDashboard()">🏪 Dashboard</button>`
       : '';
     navRight.innerHTML = `
-      <div class="user-badge">${currentUser.role === 'seller' ? '🏪' : '👤'} ${currentUser.name}</div>
+      <div class="user-badge" onclick="openProfileModal()" title="Edit Profil" style="cursor:pointer">
+        ${currentUser.role === 'seller' ? '🏪' : '👤'} ${currentUser.name} ✏️
+      </div>
       ${sellerBtn}
       <button class="btn-ghost" onclick="doLogout()">Keluar</button>
       <button class="cart-btn" onclick="toggleCart()">🛒<span class="cart-badge" id="cartBadge">0</span></button>
