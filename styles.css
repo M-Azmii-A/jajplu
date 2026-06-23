@@ -407,3 +407,76 @@ footer { background: var(--surface); border-top: 1px solid var(--border); paddin
   .nav-center { display: none; }
   .footer-inner { grid-template-columns: 1fr 1fr; }
 }
+
+/* =====================
+   WARUNG TOGGLE (Buka/Tutup)
+   ===================== */
+.seller-dash-header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:16px; gap:16px; }
+.warung-toggle-wrap { display:flex; align-items:center; gap:10px; flex-shrink:0; margin-top:4px; }
+.warung-label { font-size:.85rem; font-weight:700; color:var(--green); }
+.toggle-switch { position:relative; width:48px; height:26px; flex-shrink:0; }
+.toggle-switch input { opacity:0; width:0; height:0; }
+.toggle-slider { position:absolute; inset:0; background:var(--border); border-radius:100px; cursor:pointer; transition:.3s; }
+.toggle-slider::before { content:''; position:absolute; width:20px; height:20px; left:3px; top:3px; background:#fff; border-radius:50%; transition:.3s; }
+.toggle-switch input:checked + .toggle-slider { background:var(--green); }
+.toggle-switch input:checked + .toggle-slider::before { transform:translateX(22px); }
+
+/* =====================
+   SELLER ORDER CARDS
+   ===================== */
+.seller-order-card { background:var(--surface2); border:1px solid var(--border); border-radius:12px; padding:14px; margin-bottom:12px; }
+.soc-header { display:flex; justify-content:space-between; margin-bottom:6px; }
+.soc-id   { font-family:'Syne',sans-serif; font-weight:700; font-size:.9rem; color:var(--orange); }
+.soc-status { font-size:.82rem; font-weight:600; color:var(--text); }
+.soc-buyer { font-size:.82rem; color:var(--muted); margin-bottom:4px; }
+.soc-items { font-size:.85rem; color:var(--text); margin-bottom:8px; }
+.soc-footer { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.soc-total { font-family:'Syne',sans-serif; font-weight:700; font-size:.95rem; color:var(--red); }
+.soc-pay { font-size:.78rem; background:var(--surface); padding:3px 8px; border-radius:100px; border:1px solid var(--border); color:var(--muted); }
+.status-advance-btn { margin-left:auto; background:var(--teal,#1B6B72); border:none; color:#fff; padding:6px 14px; border-radius:8px; cursor:pointer; font-family:inherit; font-size:.82rem; font-weight:600; transition:opacity .2s; }
+.status-advance-btn:hover { opacity:.85; }
+
+/* =====================
+   SELLER STATS
+   ===================== */
+.stats-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px; }
+.stat-card { background:var(--surface2); border:1px solid var(--border); border-radius:12px; padding:16px; text-align:center; }
+.stat-num  { font-family:'Syne',sans-serif; font-size:1.6rem; font-weight:800; color:var(--red); }
+.stat-lbl  { font-size:.78rem; color:var(--muted); margin-top:4px; }
+.stats-section-title { font-family:'Syne',sans-serif; font-size:1rem; font-weight:700; margin-bottom:10px; }
+.top-menu-item { display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--border); }
+.top-menu-rank { font-family:'Syne',sans-serif; font-weight:800; color:var(--orange); width:24px; }
+.top-menu-name { flex:1; font-size:.9rem; }
+.top-menu-qty  { font-size:.82rem; color:var(--muted); }
+
+/* =====================
+   ADDRESS OPTIONS
+   ===================== */
+.addr-options { display:flex; flex-direction:column; gap:8px; }
+.addr-opt { display:flex; align-items:flex-start; gap:10px; background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:12px; cursor:pointer; transition:border-color .2s; }
+.addr-opt:has(input:checked) { border-color:var(--red); }
+.addr-opt input { margin-top:3px; accent-color:var(--red); flex-shrink:0; }
+.addr-opt-title { font-weight:600; font-size:.9rem; margin-bottom:2px; }
+.addr-opt-sub   { font-size:.8rem; color:var(--muted); }
+
+/* =====================
+   PAYMENT OPTIONS
+   ===================== */
+.pay-options { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.pay-opt { cursor:pointer; }
+.pay-opt input { display:none; }
+.pay-opt-body { display:flex; flex-direction:column; align-items:center; gap:3px; background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:10px 6px; font-size:.85rem; font-weight:600; transition:all .2s; text-align:center; }
+.pay-opt-body small { font-size:.7rem; color:var(--muted); font-weight:400; }
+.pay-opt input:checked + .pay-opt-body { border-color:var(--red); background:rgba(255,59,59,.08); color:var(--red); }
+
+/* =====================
+   BUYER HISTORY CARDS
+   ===================== */
+.history-card { background:var(--surface2); border:1px solid var(--border); border-radius:12px; padding:14px; margin-bottom:12px; }
+.hc-header { display:flex; justify-content:space-between; margin-bottom:6px; }
+.hc-id     { font-family:'Syne',sans-serif; font-weight:700; font-size:.9rem; color:var(--orange); }
+.hc-status { font-size:.82rem; font-weight:600; }
+.hc-items  { font-size:.85rem; color:var(--text); margin-bottom:4px; }
+.hc-addr   { font-size:.8rem; color:var(--muted); margin-bottom:8px; }
+.hc-footer { display:flex; gap:12px; align-items:center; font-size:.85rem; font-weight:600; color:var(--red); flex-wrap:wrap; }
+.hc-date   { margin-left:auto; color:var(--muted); font-weight:400; font-size:.78rem; }
