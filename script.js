@@ -324,15 +324,28 @@ function openCheckoutModal() {
   overlay.classList.add('open');
   requestAnimationFrame(() => overlay.classList.add('visible'));
 
-  document.getElementById('checkoutName').value    = currentUser.name || '';
-  document.getElementById('checkoutPhone').value   = (currentUser.phone || '').replace(/^62/, '');
-  document.getElementById('checkoutAddress').value = currentUser.address || '';
-  document.getElementById('checkoutNote').value    = '';
+  document.getElementById('checkoutName').value  = currentUser.name || '';
+  document.getElementById('checkoutPhone').value = (currentUser.phone || '').replace(/^62/, '');
+  document.getElementById('checkoutNote').value  = '';
   document.getElementById('checkoutError').textContent = '';
+
+  // Setup pilihan alamat
+  const hasMain = !!(currentUser.address);
+  const mainText = document.getElementById('addrMainText');
+  mainText.textContent = hasMain ? currentUser.address : 'Belum diatur – tambah di Edit Profil';
+  // Default: alamat utama jika ada, alamat lain jika tidak
+  const radios = document.querySelectorAll('input[name="addrChoice"]');
+  radios[0].checked = hasMain;
+  radios[1].checked = !hasMain;
+  document.getElementById('checkoutAddress').style.display = hasMain ? 'none' : 'block';
+  document.getElementById('checkoutAddress').value = '';
+
+  // Reset payment ke COD
+  const payRadios = document.querySelectorAll('input[name="payMethod"]');
+  if (payRadios[0]) payRadios[0].checked = true;
 
   const items    = Object.values(cart);
   const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0);
-
   document.getElementById('checkoutSummary').innerHTML = `
     <div class="co-summary-title">📋 Ringkasan Pesanan (${items.length} item)</div>
     <div class="co-summary-list">
@@ -342,11 +355,16 @@ function openCheckoutModal() {
           <span class="co-item-price">${formatRupiah(i.price * i.qty)}</span>
         </div>`).join('')}
     </div>`;
-
   document.getElementById('checkoutTotalRow').innerHTML = `
     <div class="cart-row total" style="font-size:1rem;padding-top:10px;border-top:1px solid var(--border)">
       <span>Total Pembayaran</span><span>${formatRupiah(subtotal)}</span>
     </div>`;
+}
+
+function onAddrChoice(radio) {
+  const addrField = document.getElementById('checkoutAddress');
+  addrField.style.display = radio.value === 'other' ? 'block' : 'none';
+  if (radio.value === 'other') addrField.focus();
 }
 
 function closeCheckoutModal() {
@@ -361,9 +379,18 @@ function handleCheckoutOverlayClick(e) {
 async function doCheckout() {
   const recipientName  = document.getElementById('checkoutName').value.trim();
   const recipientPhone = document.getElementById('checkoutPhone').value.trim();
-  const address        = document.getElementById('checkoutAddress').value.trim();
   const note           = document.getElementById('checkoutNote').value.trim();
   const errEl          = document.getElementById('checkoutError');
+  const payMethod      = document.querySelector('input[name="payMethod"]:checked')?.value || 'cod';
+  const addrChoice     = document.querySelector('input[name="addrChoice"]:checked')?.value || 'main';
+
+  // Tentukan alamat
+  let address = '';
+  if (addrChoice === 'main') {
+    address = currentUser.address || '';
+  } else {
+    address = document.getElementById('checkoutAddress').value.trim();
+  }
 
   if (!recipientName)      { errEl.textContent = '⚠️ Nama penerima wajib diisi.'; return; }
   if (!recipientPhone)     { errEl.textContent = '⚠️ No. telepon penerima wajib diisi.'; return; }
@@ -380,21 +407,21 @@ async function doCheckout() {
     recipientPhone: normalizePhone(recipientPhone),
     address,
     note,
+    payMethod,
     items: items.map(i => ({ id: i.id, name: i.name, price: i.price, qty: i.qty, resto: i.resto })),
     total:     subtotal,
-    status:    'pending',
+    status:    'Menunggu Konfirmasi',
+    progress:  'Pesanan diterima',
     createdAt: new Date().toISOString(),
   };
 
   try {
     await dbAdd('orders', order);
-
-    if (!currentUser.address) {
+    if (!currentUser.address && address) {
       currentUser.address = address;
       await dbPut('users', currentUser);
       await saveSession(currentUser);
     }
-
     cart = {};
     updateCartBadge();
     renderCartPanel();
@@ -525,12 +552,15 @@ async function doLogout() {
 function updateAuthNav() {
   const navRight = document.getElementById('navRight');
   if (currentUser) {
-    const sellerBtn = currentUser.role === 'seller' ? `<button class="btn-seller" onclick="openSellerDashboard()">🏪 Dashboard</button>` : '';
+    const sellerBtn = currentUser.role === 'seller'
+      ? `<button class="btn-seller" onclick="openSellerDashboard()">🏪 Dashboard</button>` : '';
+    const historyBtn = currentUser.role === 'buyer'
+      ? `<button class="btn-ghost" onclick="openHistoryModal()">📋 Riwayat</button>` : '';
     navRight.innerHTML = `
       <div class="user-badge" onclick="openProfileModal()" title="Edit Profil" style="cursor:pointer">
         ${currentUser.role === 'seller' ? '🏪' : '👤'} ${currentUser.name} ✏️
       </div>
-      ${sellerBtn}
+      ${sellerBtn}${historyBtn}
       <button class="btn-ghost" onclick="doLogout()">Keluar</button>
       <button class="cart-btn" onclick="toggleCart()">🛒<span class="cart-badge" id="cartBadge">0</span></button>`;
   } else {
@@ -590,6 +620,11 @@ async function openSellerDashboard() {
   const sellerMenu = await dbGetByIndex('menu', 'resto', currentUser.restoName);
   document.getElementById('sellerDashTitle').textContent = currentUser.restoName;
   document.getElementById('sellerDashSub').textContent   = `Kategori: ${currentUser.restoCat} • ${sellerMenu.length} menu`;
+  // Init toggle buka/tutup
+  const isOpen = currentUser.isOpen !== false; // default buka
+  document.getElementById('warungToggle').checked = isOpen;
+  document.getElementById('warungStatusLabel').textContent = isOpen ? '🟢 Buka' : '🔴 Tutup';
+  document.getElementById('warungStatusLabel').style.color = isOpen ? 'var(--green)' : '#ff6b6b';
   switchDashTab('menu', document.querySelector('.dash-tab'));
 }
 function closeSellerDashboard() {
@@ -600,10 +635,13 @@ function handleSellerOverlayClick(e) { if (e.target === document.getElementById(
 function switchDashTab(tab, el) {
   document.querySelectorAll('.dash-tab').forEach(t => t.classList.remove('active'));
   if (el) el.classList.add('active');
-  document.getElementById('dashMenuTab').style.display = tab === 'menu' ? 'block' : 'none';
-  document.getElementById('dashAddTab').style.display  = tab === 'add'  ? 'block' : 'none';
-  if (tab === 'menu') renderSellerMenu();
-  if (tab === 'add')  resetImgUploadField();
+  ['dashMenuTab','dashAddTab','dashOrdersTab','dashStatsTab'].forEach(id => {
+    document.getElementById(id).style.display = 'none';
+  });
+  if (tab === 'menu')   { document.getElementById('dashMenuTab').style.display   = 'block'; renderSellerMenu(); }
+  if (tab === 'add')    { document.getElementById('dashAddTab').style.display    = 'block'; resetImgUploadField(); }
+  if (tab === 'orders') { document.getElementById('dashOrdersTab').style.display = 'block'; renderSellerOrders(); }
+  if (tab === 'stats')  { document.getElementById('dashStatsTab').style.display  = 'block'; renderSellerStats(); }
 }
 
 async function renderSellerMenu() {
@@ -681,7 +719,157 @@ async function deleteSellerMenu(itemId) {
 }
 
 // ╔══════════════════════════════════════════════════════╗
-// ║                  INISIALISASI APP                    ║
+// ║          PENJUAL: BUKA/TUTUP WARUNG                  ║
+// ╚══════════════════════════════════════════════════════╝
+
+async function toggleWarungStatus() {
+  const isOpen = document.getElementById('warungToggle').checked;
+  currentUser.isOpen = isOpen;
+  await dbPut('users', currentUser);
+  await saveSession(currentUser);
+  const label = document.getElementById('warungStatusLabel');
+  label.textContent = isOpen ? '🟢 Buka' : '🔴 Tutup';
+  label.style.color = isOpen ? 'var(--green)' : '#ff6b6b';
+  showToast(isOpen ? '🟢 Warung kamu sekarang Buka!' : '🔴 Warung kamu sekarang Tutup');
+}
+
+// ╔══════════════════════════════════════════════════════╗
+// ║         PENJUAL: PESANAN MASUK & PROGRESS            ║
+// ╚══════════════════════════════════════════════════════╝
+
+const ORDER_STATUSES = ['Menunggu Konfirmasi', 'Sedang Dibuat', 'Dalam Pengantaran', 'Selesai'];
+const STATUS_ICONS   = { 'Menunggu Konfirmasi':'⏳', 'Sedang Dibuat':'👨‍🍳', 'Dalam Pengantaran':'🛵', 'Selesai':'✅' };
+
+async function renderSellerOrders() {
+  const list = document.getElementById('sellerOrdersList');
+  const allOrders = await dbGetAll('orders');
+  const myOrders  = allOrders.filter(o => o.items && o.items.some(i => i.resto === currentUser.restoName));
+  if (myOrders.length === 0) {
+    list.innerHTML = `<div class="seller-empty">📦 Belum ada pesanan masuk.</div>`; return;
+  }
+  list.innerHTML = myOrders.map(o => {
+    const nextStatus = ORDER_STATUSES[ORDER_STATUSES.indexOf(o.status) + 1];
+    const nextBtn = nextStatus
+      ? `<button class="status-advance-btn" onclick="advanceOrderStatus('${o.orderId}')">➡️ ${nextStatus}</button>` : '';
+    const payBadge = { cod:'💵 COD', transfer:'🏦 Transfer', qris:'📱 QRIS' }[o.payMethod] || '💵 COD';
+    return `
+      <div class="seller-order-card">
+        <div class="soc-header">
+          <span class="soc-id">#${o.orderId.slice(-6)}</span>
+          <span class="soc-status">${STATUS_ICONS[o.status]||'⏳'} ${o.status}</span>
+        </div>
+        <div class="soc-buyer">👤 ${o.buyerName} &nbsp;|&nbsp; 📍 ${o.address}</div>
+        <div class="soc-items">${o.items.map(i=>`${i.name} ×${i.qty}`).join(', ')}</div>
+        <div class="soc-footer">
+          <span class="soc-total">${formatRupiah(o.total)}</span>
+          <span class="soc-pay">${payBadge}</span>
+          ${nextBtn}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+async function advanceOrderStatus(orderId) {
+  const allOrders = await dbGetAll('orders');
+  const order = allOrders.find(o => o.orderId === orderId);
+  if (!order) return;
+  const idx = ORDER_STATUSES.indexOf(order.status);
+  if (idx < ORDER_STATUSES.length - 1) {
+    order.status   = ORDER_STATUSES[idx + 1];
+    order.progress = order.status;
+    // dbPut memerlukan key (id) untuk update — gunakan put langsung
+    await new Promise((res, rej) => {
+      const tx  = db.transaction('orders', 'readwrite');
+      const req = tx.objectStore('orders').put(order);
+      req.onsuccess = () => res();
+      req.onerror   = () => rej(req.error);
+    });
+    showToast(`📦 Pesanan #${orderId.slice(-6)} → ${order.status}`);
+    renderSellerOrders();
+  }
+}
+
+// ╔══════════════════════════════════════════════════════╗
+// ║            PENJUAL: STATISTIK PENJUALAN              ║
+// ╚══════════════════════════════════════════════════════╝
+
+async function renderSellerStats() {
+  const el = document.getElementById('sellerStatsContent');
+  const allOrders = await dbGetAll('orders');
+  const myOrders  = allOrders.filter(o => o.items && o.items.some(i => i.resto === currentUser.restoName));
+
+  const totalOrders   = myOrders.length;
+  const totalRevenue  = myOrders.filter(o => o.status === 'Selesai').reduce((s,o) => s+o.total, 0);
+  const totalItems    = myOrders.reduce((s,o) => s + o.items.filter(i=>i.resto===currentUser.restoName).reduce((a,i)=>a+i.qty,0), 0);
+
+  // Hitung per menu
+  const menuCount = {};
+  myOrders.forEach(o => o.items.filter(i=>i.resto===currentUser.restoName).forEach(i => {
+    menuCount[i.name] = (menuCount[i.name] || 0) + i.qty;
+  }));
+  const topMenus = Object.entries(menuCount).sort((a,b) => b[1]-a[1]).slice(0,5);
+
+  el.innerHTML = `
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-num">${totalOrders}</div><div class="stat-lbl">Total Pesanan</div></div>
+      <div class="stat-card"><div class="stat-num">${totalItems}</div><div class="stat-lbl">Item Terjual</div></div>
+      <div class="stat-card" style="grid-column:1/-1"><div class="stat-num">${formatRupiah(totalRevenue)}</div><div class="stat-lbl">Total Pendapatan (Selesai)</div></div>
+    </div>
+    <div class="stats-section-title">🏆 Menu Terlaris</div>
+    ${topMenus.length === 0 ? '<div class="seller-empty">Belum ada data penjualan.</div>' :
+      topMenus.map(([name, qty], i) => `
+        <div class="top-menu-item">
+          <span class="top-menu-rank">#${i+1}</span>
+          <span class="top-menu-name">${name}</span>
+          <span class="top-menu-qty">${qty} terjual</span>
+        </div>`).join('')}`;
+}
+
+// ╔══════════════════════════════════════════════════════╗
+// ║          PEMBELI: RIWAYAT PEMBELIAN                  ║
+// ╚══════════════════════════════════════════════════════╝
+
+async function openHistoryModal() {
+  const overlay = document.getElementById('historyOverlay');
+  overlay.classList.add('open');
+  requestAnimationFrame(() => overlay.classList.add('visible'));
+  await renderHistoryList();
+}
+function closeHistoryModal() {
+  const overlay = document.getElementById('historyOverlay');
+  overlay.classList.remove('visible');
+  setTimeout(() => overlay.classList.remove('open'), 280);
+}
+
+async function renderHistoryList() {
+  const list = document.getElementById('historyList');
+  const allOrders = await dbGetAll('orders');
+  const myOrders  = allOrders
+    .filter(o => o.buyerPhone === currentUser.phone)
+    .sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+  if (myOrders.length === 0) {
+    list.innerHTML = `<div class="seller-empty">📋 Belum ada riwayat pembelian.</div>`; return;
+  }
+
+  const payLabels = { cod:'💵 COD', transfer:'🏦 Transfer', qris:'📱 QRIS' };
+  list.innerHTML = myOrders.map(o => `
+    <div class="history-card">
+      <div class="hc-header">
+        <span class="hc-id">#${o.orderId.slice(-6)}</span>
+        <span class="hc-status">${STATUS_ICONS[o.status]||'⏳'} ${o.status}</span>
+      </div>
+      <div class="hc-items">${o.items.map(i=>`${i.name} ×${i.qty}`).join(' · ')}</div>
+      <div class="hc-addr">📍 ${o.address}</div>
+      <div class="hc-footer">
+        <span>${formatRupiah(o.total)}</span>
+        <span>${payLabels[o.payMethod]||'💵 COD'}</span>
+        <span class="hc-date">${new Date(o.createdAt).toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'})}</span>
+      </div>
+    </div>`).join('');
+}
+
+// ╔══════════════════════════════════════════════════════╗
 // ╚══════════════════════════════════════════════════════╝
 
 async function initApp() {
