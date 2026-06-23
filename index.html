@@ -271,18 +271,26 @@
         <div class="modal-title" id="sellerDashTitle">Dashboard Restoran</div>
         <div class="modal-sub" id="sellerDashSub"></div>
       </div>
+      <!-- Toggle Buka/Tutup -->
+      <div class="warung-toggle-wrap">
+        <span id="warungStatusLabel" class="warung-label">Buka</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="warungToggle" onchange="toggleWarungStatus()">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
     </div>
 
     <!-- TAB NAV -->
     <div class="dash-tabs">
-      <button class="dash-tab active" onclick="switchDashTab('menu', this)">🍽️ Menu Saya</button>
-      <button class="dash-tab" onclick="switchDashTab('add', this)">➕ Tambah Menu</button>
+      <button class="dash-tab active" onclick="switchDashTab('menu', this)">🍽️ Menu</button>
+      <button class="dash-tab" onclick="switchDashTab('add', this)">➕ Tambah</button>
+      <button class="dash-tab" onclick="switchDashTab('orders', this)">📦 Pesanan</button>
+      <button class="dash-tab" onclick="switchDashTab('stats', this)">📊 Statistik</button>
     </div>
 
     <!-- TAB: MENU LIST -->
-    <div id="dashMenuTab">
-      <div id="sellerMenuList"></div>
-    </div>
+    <div id="dashMenuTab"><div id="sellerMenuList"></div></div>
 
     <!-- TAB: ADD MENU -->
     <div id="dashAddTab" style="display:none">
@@ -313,6 +321,16 @@
       </div>
       <div id="addMenuError" class="form-error"></div>
       <button class="form-btn" onclick="doAddMenu()">Tambahkan ke Menu</button>
+    </div>
+
+    <!-- TAB: PESANAN MASUK -->
+    <div id="dashOrdersTab" style="display:none">
+      <div id="sellerOrdersList"></div>
+    </div>
+
+    <!-- TAB: STATISTIK -->
+    <div id="dashStatsTab" style="display:none">
+      <div id="sellerStatsContent"></div>
     </div>
   </div>
 </div>
@@ -357,7 +375,6 @@
     <div class="modal-title">Konfirmasi Pesanan</div>
     <div class="modal-sub">Lengkapi detail pengiriman</div>
 
-    <!-- Ringkasan pesanan -->
     <div class="checkout-summary" id="checkoutSummary"></div>
 
     <div class="form-group" style="margin-top:16px">
@@ -371,17 +388,66 @@
         <input type="tel" id="checkoutPhone" placeholder="812 3456 7890" maxlength="14">
       </div>
     </div>
+
+    <!-- Pilihan Alamat -->
     <div class="form-group">
-      <label>Alamat Tujuan Pengiriman</label>
-      <textarea id="checkoutAddress" placeholder="Jl. Contoh No. 1, Kelurahan, Kecamatan, Kota" rows="3"></textarea>
+      <label>Alamat Pengiriman</label>
+      <div class="addr-options" id="addrOptions">
+        <label class="addr-opt" id="addrOptMain">
+          <input type="radio" name="addrChoice" value="main" checked onchange="onAddrChoice(this)">
+          <div class="addr-opt-body">
+            <div class="addr-opt-title">🏠 Alamat Utama</div>
+            <div class="addr-opt-sub" id="addrMainText">Belum diatur</div>
+          </div>
+        </label>
+        <label class="addr-opt">
+          <input type="radio" name="addrChoice" value="other" onchange="onAddrChoice(this)">
+          <div class="addr-opt-body">
+            <div class="addr-opt-title">📍 Alamat Lain</div>
+            <div class="addr-opt-sub">Masukkan alamat baru</div>
+          </div>
+        </label>
+      </div>
+      <textarea id="checkoutAddress" placeholder="Jl. Contoh No. 1, Kelurahan, Kecamatan, Kota" rows="2" style="margin-top:10px;display:none"></textarea>
     </div>
+
+    <!-- Metode Pembayaran -->
+    <div class="form-group">
+      <label>Metode Pembayaran</label>
+      <div class="pay-options">
+        <label class="pay-opt">
+          <input type="radio" name="payMethod" value="cod" checked>
+          <div class="pay-opt-body">💵<span>COD</span><small>Bayar di tempat</small></div>
+        </label>
+        <label class="pay-opt">
+          <input type="radio" name="payMethod" value="transfer">
+          <div class="pay-opt-body">🏦<span>Transfer</span><small>Bank / e-wallet</small></div>
+        </label>
+        <label class="pay-opt">
+          <input type="radio" name="payMethod" value="qris">
+          <div class="pay-opt-body">📱<span>QRIS</span><small>Scan & bayar</small></div>
+        </label>
+      </div>
+    </div>
+
     <div class="form-group">
       <label>Catatan untuk Penjual <span style="color:var(--muted);font-weight:400">(opsional)</span></label>
-      <input type="text" id="checkoutNote" placeholder="Contoh: Tidak pakai bawang, level pedas sedang...">
+      <input type="text" id="checkoutNote" placeholder="Contoh: Tidak pakai bawang...">
     </div>
     <div id="checkoutError" class="form-error"></div>
     <div class="checkout-total-row" id="checkoutTotalRow"></div>
     <button class="form-btn" onclick="doCheckout()" style="margin-top:12px">✅ Konfirmasi & Pesan</button>
+  </div>
+</div>
+
+<!-- RIWAYAT PEMBELIAN MODAL -->
+<div class="modal-overlay" id="historyOverlay" onclick="if(event.target===this)closeHistoryModal()">
+  <div class="modal modal-wide" id="historyModal">
+    <button class="modal-close" onclick="closeHistoryModal()">✕</button>
+    <div class="modal-logo">Jaj<span>pu</span></div>
+    <div class="modal-title">Riwayat Pembelian</div>
+    <div class="modal-sub">Semua pesanan kamu</div>
+    <div id="historyList"></div>
   </div>
 </div>
 
