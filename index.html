@@ -287,6 +287,7 @@
       <button class="dash-tab" onclick="switchDashTab('add', this)">➕ Tambah</button>
       <button class="dash-tab" onclick="switchDashTab('orders', this)">📦 Pesanan</button>
       <button class="dash-tab" onclick="switchDashTab('stats', this)">📊 Statistik</button>
+      <button class="dash-tab" onclick="switchDashTab('laporan', this)">📋 Laporan</button>
     </div>
 
     <!-- TAB: MENU LIST -->
@@ -331,6 +332,14 @@
     <!-- TAB: STATISTIK -->
     <div id="dashStatsTab" style="display:none">
       <div id="sellerStatsContent"></div>
+    </div>
+
+    <!-- TAB: LAPORAN -->
+    <div id="dashLaporanTab" style="display:none">
+      <div class="laporan-inline-header">
+        <p style="color:var(--muted);font-size:.85rem;margin-bottom:12px">Unduh laporan lengkap hasil penjualan restoran kamu.</p>
+        <button class="form-btn" onclick="openLaporanModal()" style="width:100%">📊 Buka Laporan Penjualan</button>
+      </div>
     </div>
   </div>
 </div>
@@ -414,20 +423,34 @@
     <!-- Metode Pembayaran -->
     <div class="form-group">
       <label>Metode Pembayaran</label>
-      <div class="pay-options">
+      <div class="pay-options pay-options-grid">
         <label class="pay-opt">
-          <input type="radio" name="payMethod" value="cod" checked>
+          <input type="radio" name="payMethod" value="cod" checked onchange="onPayMethodChange(this)">
           <div class="pay-opt-body">💵<span>COD</span><small>Bayar di tempat</small></div>
         </label>
         <label class="pay-opt">
-          <input type="radio" name="payMethod" value="transfer">
-          <div class="pay-opt-body">🏦<span>Transfer</span><small>Bank / e-wallet</small></div>
+          <input type="radio" name="payMethod" value="bca" onchange="onPayMethodChange(this)">
+          <div class="pay-opt-body">🏦<span>BCA</span><small>Transfer Bank</small></div>
         </label>
         <label class="pay-opt">
-          <input type="radio" name="payMethod" value="qris">
+          <input type="radio" name="payMethod" value="mandiri" onchange="onPayMethodChange(this)">
+          <div class="pay-opt-body">🏦<span>Mandiri</span><small>Transfer Bank</small></div>
+        </label>
+        <label class="pay-opt">
+          <input type="radio" name="payMethod" value="gopay" onchange="onPayMethodChange(this)">
+          <div class="pay-opt-body">💚<span>GoPay</span><small>E-Wallet</small></div>
+        </label>
+        <label class="pay-opt">
+          <input type="radio" name="payMethod" value="ovo" onchange="onPayMethodChange(this)">
+          <div class="pay-opt-body">💜<span>OVO</span><small>E-Wallet</small></div>
+        </label>
+        <label class="pay-opt">
+          <input type="radio" name="payMethod" value="qris" onchange="onPayMethodChange(this)">
           <div class="pay-opt-body">📱<span>QRIS</span><small>Scan & bayar</small></div>
         </label>
       </div>
+      <!-- Info metode pembayaran -->
+      <div id="payMethodInfo" class="pay-method-info" style="display:none"></div>
     </div>
 
     <div class="form-group">
@@ -445,12 +468,58 @@
   <div class="modal modal-wide" id="historyModal">
     <button class="modal-close" onclick="closeHistoryModal()">✕</button>
     <div class="modal-logo">Jaj<span>pu</span></div>
-    <div class="modal-title">Riwayat Pembelian</div>
+    <div class="modal-title">📋 Riwayat Pembelian</div>
     <div class="modal-sub">Semua pesanan kamu</div>
     <div id="historyList"></div>
   </div>
 </div>
 
+<!-- PAYMENT DETAIL MODAL -->
+<div class="modal-overlay" id="payDetailOverlay" onclick="if(event.target===this)closePayDetailModal()">
+  <div class="modal" id="payDetailModal">
+    <button class="modal-close" onclick="closePayDetailModal()">✕</button>
+    <div class="modal-logo">Jaj<span>pu</span></div>
+    <div class="modal-title" id="payDetailTitle">Detail Pembayaran</div>
+    <div class="modal-sub" id="payDetailSub"></div>
+    <div id="payDetailContent"></div>
+    <button class="form-btn" onclick="confirmPaymentDone()" style="margin-top:16px">✅ Saya Sudah Bayar</button>
+  </div>
+</div>
+
+<!-- LAPORAN PENJUALAN MODAL -->
+<div class="modal-overlay" id="laporanOverlay" onclick="if(event.target===this)closeLaporanModal()">
+  <div class="modal modal-wide" id="laporanModal">
+    <button class="modal-close" onclick="closeLaporanModal()">✕</button>
+    <div class="modal-logo">Jaj<span>pu</span></div>
+    <div class="modal-title">📊 Laporan Penjualan</div>
+    <div class="modal-sub" id="laporanSub"></div>
+
+    <!-- Filter Periode -->
+    <div class="laporan-filter">
+      <label class="laporan-period-label">Periode:</label>
+      <div class="laporan-period-opts">
+        <button class="period-btn active" onclick="setLaporanPeriod('all',this)">Semua</button>
+        <button class="period-btn" onclick="setLaporanPeriod('today',this)">Hari Ini</button>
+        <button class="period-btn" onclick="setLaporanPeriod('week',this)">7 Hari</button>
+        <button class="period-btn" onclick="setLaporanPeriod('month',this)">30 Hari</button>
+      </div>
+    </div>
+
+    <div id="laporanContent"></div>
+
+    <!-- Export Buttons -->
+    <div class="laporan-export-btns">
+      <button class="export-btn pdf-btn" onclick="exportLaporanPDF()">📄 Export PDF</button>
+      <button class="export-btn excel-btn" onclick="exportLaporanExcel()">📊 Export Excel</button>
+    </div>
+  </div>
+</div>
+
+<!-- jsPDF + AutoTable -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<!-- SheetJS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="script.js"></script>
 </body>
 </html>
