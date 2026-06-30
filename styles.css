@@ -287,15 +287,15 @@ nav {
 }
 
 /* MODAL WIDE */
-.modal-wide { max-width: 520px; }
+.modal-wide { max-width: 640px; }
 
 /* DASHBOARD TABS */
 .seller-dash-header { margin-bottom: 20px; }
-.dash-tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+.dash-tabs { display: flex; gap: 6px; margin-bottom: 20px; flex-wrap: wrap; }
 .dash-tab {
-  background: var(--surface2); border: 1px solid var(--border); color: var(--muted);
-  padding: 8px 18px; border-radius: 8px; cursor: pointer; font-family: inherit;
-  font-size: .85rem; font-weight: 500; transition: all .2s;
+  flex-shrink: 0; background: var(--surface2); border: 1px solid var(--border); color: var(--muted);
+  padding: 8px 14px; border-radius: 8px; cursor: pointer; font-family: inherit;
+  font-size: .82rem; font-weight: 500; transition: all .2s; white-space: nowrap;
 }
 .dash-tab:hover { color: var(--text); border-color: var(--muted); }
 .dash-tab.active { background: var(--red); border-color: var(--red); color: #fff; }
@@ -480,3 +480,133 @@ footer { background: var(--surface); border-top: 1px solid var(--border); paddin
 .hc-addr   { font-size:.8rem; color:var(--muted); margin-bottom:8px; }
 .hc-footer { display:flex; gap:12px; align-items:center; font-size:.85rem; font-weight:600; color:var(--red); flex-wrap:wrap; }
 .hc-date   { margin-left:auto; color:var(--muted); font-weight:400; font-size:.78rem; }
+/* =====================
+   HISTORY FILTER BAR
+   ===================== */
+.history-filter-bar {
+  display: flex; gap: 6px; flex-wrap: wrap;
+  padding-bottom: 4px; margin-bottom: 16px;
+}
+.hist-filter {
+  flex-shrink: 0; background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 100px; padding: 6px 14px; cursor: pointer;
+  font-family: inherit; font-size: .8rem; color: var(--muted); font-weight: 500;
+  transition: all .2s; white-space: nowrap;
+}
+.hist-filter:hover  { border-color: var(--muted); color: var(--text); }
+.hist-filter.active { background: var(--red); border-color: var(--red); color: #fff; }
+
+/* HISTORY CARD extras */
+.hc-note { font-size: .78rem; color: var(--muted); margin-bottom: 6px; font-style: italic; }
+.hc-pay-btn {
+  width: 100%; margin-top: 10px; padding: 8px;
+  background: rgba(255,59,59,.1); border: 1px solid var(--red);
+  color: var(--red); border-radius: 8px; cursor: pointer;
+  font-family: inherit; font-weight: 600; font-size: .85rem; transition: all .2s;
+}
+.hc-pay-btn:hover { background: var(--red); color: #fff; }
+
+/* =====================
+   PAYMENT DETAIL MODAL
+   ===================== */
+.pay-detail-amount {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 10px; padding: 12px 16px; margin-bottom: 14px;
+  font-size: .9rem; color: var(--muted);
+}
+.pay-detail-amount span { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.2rem; color: var(--red); }
+.pay-detail-card {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 12px; padding: 14px; margin-bottom: 14px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.pdc-row {
+  display: flex; align-items: center; gap: 8px; font-size: .85rem; flex-wrap: wrap;
+}
+.pdc-row span { color: var(--muted); min-width: 110px; flex-shrink: 0; }
+.pdc-row strong { color: var(--text); font-weight: 700; flex: 1; }
+.copy-btn {
+  background: var(--surface); border: 1px solid var(--border); color: var(--muted);
+  border-radius: 6px; padding: 3px 8px; font-size: .72rem; cursor: pointer;
+  font-family: inherit; transition: all .2s; white-space: nowrap;
+}
+.copy-btn:hover { border-color: var(--red); color: var(--red); }
+.pay-detail-steps { font-size: .85rem; }
+.pds-title { font-weight: 700; margin-bottom: 8px; color: var(--text); }
+.pay-detail-steps ol { padding-left: 18px; color: var(--muted); line-height: 1.8; }
+.pay-detail-steps li strong { color: var(--text); }
+
+/* =====================
+   PAYMENT METHOD INFO BOX (Checkout)
+   ===================== */
+.pay-method-info { margin-top: 10px; }
+.pay-info-box {
+  background: rgba(255,59,59,.07); border: 1px solid rgba(255,59,59,.25);
+  border-radius: 10px; padding: 10px 14px; font-size: .82rem; color: var(--text);
+  line-height: 1.5;
+}
+
+/* PAYMENT OPTIONS 6-grid */
+.pay-options-grid { grid-template-columns: repeat(3, 1fr); display: grid; gap: 8px; }
+
+/* =====================
+   LAPORAN PENJUALAN
+   ===================== */
+.laporan-filter {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 18px; flex-wrap: wrap;
+}
+.laporan-period-label { font-size: .82rem; color: var(--muted); font-weight: 600; }
+.laporan-period-opts  { display: flex; gap: 6px; flex-wrap: wrap; }
+.period-btn {
+  background: var(--surface2); border: 1px solid var(--border); color: var(--muted);
+  border-radius: 100px; padding: 5px 14px; cursor: pointer; font-family: inherit;
+  font-size: .8rem; font-weight: 500; transition: all .2s;
+}
+.period-btn:hover  { color: var(--text); border-color: var(--muted); }
+.period-btn.active { background: var(--red); border-color: var(--red); color: #fff; }
+
+.laporan-stats-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;
+}
+.laporan-revenue { grid-column: 1 / -1; }
+
+.laporan-section-title {
+  font-family: 'Syne', sans-serif; font-size: .95rem; font-weight: 700;
+  margin: 18px 0 8px; color: var(--text);
+}
+.laporan-table-wrap { overflow-x: auto; margin-bottom: 4px; border-radius: 10px; border: 1px solid var(--border); }
+.laporan-table {
+  width: 100%; border-collapse: collapse; font-size: .82rem;
+}
+.laporan-table thead tr { background: var(--surface2); }
+.laporan-table th {
+  text-align: left; padding: 10px 12px;
+  color: var(--muted); font-size: .75rem; text-transform: uppercase;
+  letter-spacing: .04em; font-weight: 600; white-space: nowrap;
+}
+.laporan-table td {
+  padding: 9px 12px; border-top: 1px solid var(--border); color: var(--text);
+  vertical-align: middle;
+}
+.laporan-table tbody tr:hover { background: rgba(255,255,255,.02); }
+.lap-rank   { color: var(--orange); font-weight: 700; font-size: .85rem; width: 30px; }
+.lap-center { text-align: center; }
+.lap-red    { color: var(--red); font-weight: 700; white-space: nowrap; }
+.lap-id     { color: var(--orange); font-family: 'Syne',sans-serif; font-weight: 700; font-size: .8rem; }
+
+.laporan-export-btns {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px;
+}
+.export-btn {
+  padding: 11px; border: none; border-radius: 10px; font-family: inherit;
+  font-weight: 700; font-size: .9rem; cursor: pointer; transition: all .2s;
+}
+.pdf-btn   { background: #e74c3c; color: #fff; }
+.pdf-btn:hover   { background: #c0392b; }
+.excel-btn { background: #27ae60; color: #fff; }
+.excel-btn:hover { background: #1e8449; }
+
+.laporan-inline-header { padding: 8px 0; }
+
+/* Laporan tab scroll di dashboard */
+#dashLaporanTab { max-height: 60vh; overflow-y: auto; }
