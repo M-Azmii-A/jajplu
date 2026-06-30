@@ -762,7 +762,10 @@ async function renderSellerOrders() {
     const nextStatus = ORDER_STATUSES[ORDER_STATUSES.indexOf(o.status) + 1];
     const nextBtn = nextStatus
       ? `<button class="status-advance-btn" onclick="advanceOrderStatus('${o.orderId}')">➡️ ${nextStatus}</button>` : '';
-    const payBadge = { cod:'💵 COD', transfer:'🏦 Transfer', qris:'📱 QRIS' }[o.payMethod] || '💵 COD';
+    const payBadge = { cod:'💵 COD', bca:'🏦 BCA', mandiri:'🏦 Mandiri', gopay:'💚 GoPay', ovo:'💜 OVO', qris:'📱 QRIS', transfer:'🏦 Transfer' }[o.payMethod] || '💵 COD';
+    const proofBtn = o.paymentProof
+      ? `<button class="proof-view-btn" onclick="viewPaymentProof('${o.orderId}')">🧾 Lihat Bukti Bayar</button>`
+      : (o.payMethod !== 'cod' ? `<span class="proof-none-tag">⌛ Belum upload bukti</span>` : '');
     return `
       <div class="seller-order-card">
         <div class="soc-header">
@@ -776,6 +779,7 @@ async function renderSellerOrders() {
           <span class="soc-pay">${payBadge}</span>
           ${nextBtn}
         </div>
+        ${proofBtn ? `<div class="soc-proof-row">${proofBtn}</div>` : ''}
       </div>`;
   }).join('');
 }
@@ -869,7 +873,16 @@ async function renderHistoryList() {
   };
 
   list.innerHTML = myOrders.map(o => {
-    const isPending = o.payMethod !== 'cod' && o.status === 'Menunggu Konfirmasi';
+    const isNonCod  = o.payMethod !== 'cod';
+    const isPending = isNonCod && o.status === 'Menunggu Konfirmasi';
+    let proofRow = '';
+    if (isNonCod) {
+      if (o.paymentProof) {
+        proofRow = `<button class="hc-pay-btn hc-proof-sent" onclick="viewPaymentProof('${o.orderId}')">🧾 Bukti Pembayaran Terkirim</button>`;
+      } else {
+        proofRow = `<button class="hc-pay-btn" onclick="showPaymentDetail('${o.orderId}')">💳 ${isPending ? 'Lihat Cara Bayar & Kirim Bukti' : 'Kirim Bukti Pembayaran'}</button>`;
+      }
+    }
     return `
     <div class="history-card">
       <div class="hc-header">
@@ -884,7 +897,7 @@ async function renderHistoryList() {
         <span>${payLabels[o.payMethod]||'💵 COD'}</span>
         <span class="hc-date">${new Date(o.createdAt).toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'})}</span>
       </div>
-      ${isPending ? `<button class="hc-pay-btn" onclick="showPaymentDetail('${o.orderId}')">💳 Lihat Cara Bayar</button>` : ''}
+      ${proofRow}
     </div>`;
   }).join('');
 }
@@ -908,6 +921,11 @@ async function showPaymentDetail(orderId) {
 
   const info = PAYMENT_INFO[order.payMethod];
   if (!info) return;
+
+  resetProofUploadField();
+  document.getElementById('proofUploadBox').parentElement.style.display = 'block';
+  document.querySelector('#payDetailModal .form-btn').style.display = 'block';
+  document.querySelector('#payDetailModal .form-btn').textContent = order.paymentProof ? '✅ Kirim Ulang Bukti' : '✅ Saya Sudah Bayar';
 
   document.getElementById('payDetailTitle').textContent = `${info.icon} Bayar via ${info.label}`;
   document.getElementById('payDetailSub').textContent   = `Order #${order.orderId.slice(-6)} · ${formatRupiah(order.total)}`;
@@ -1009,15 +1027,100 @@ async function showPaymentDetail(orderId) {
   requestAnimationFrame(() => document.getElementById('payDetailOverlay').classList.add('visible'));
 }
 
+let uploadedProofBase64 = null;
+
+function handleProofUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) { showToast('⚠️ Ukuran foto maksimal 5MB'); return; }
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    uploadedProofBase64 = e.target.result;
+    document.getElementById('proofPreview').src = uploadedProofBase64;
+    document.getElementById('proofPreviewWrap').style.display = 'block';
+    document.getElementById('proofUploadPlaceholder').style.display = 'none';
+    document.getElementById('proofFileInput').value = '';
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeProofUpload(event) {
+  event.stopPropagation();
+  uploadedProofBase64 = null;
+  document.getElementById('proofFileInput').value = '';
+  document.getElementById('proofPreview').src = '';
+  document.getElementById('proofPreviewWrap').style.display = 'none';
+  document.getElementById('proofUploadPlaceholder').style.display = 'flex';
+}
+
+function resetProofUploadField() {
+  uploadedProofBase64 = null;
+  const f = document.getElementById('proofFileInput'); if (f) f.value = '';
+  const p = document.getElementById('proofPreview'); if (p) p.src = '';
+  const pw = document.getElementById('proofPreviewWrap'); if (pw) pw.style.display = 'none';
+  const ph = document.getElementById('proofUploadPlaceholder'); if (ph) ph.style.display = 'flex';
+}
+
+async function saveOrderUpdate(order) {
+  return new Promise((res, rej) => {
+    const tx  = db.transaction('orders', 'readwrite');
+    const req = tx.objectStore('orders').put(order);
+    req.onsuccess = () => res();
+    req.onerror   = () => rej(req.error);
+  });
+}
+
+async function viewPaymentProof(orderId) {
+  const allOrders = await dbGetAll('orders');
+  const order = allOrders.find(o => o.orderId === orderId);
+  if (!order || !order.paymentProof) { showToast('⚠️ Belum ada bukti pembayaran.'); return; }
+
+  document.getElementById('payDetailTitle').textContent = '🧾 Bukti Pembayaran';
+  document.getElementById('payDetailSub').textContent   = `Order #${order.orderId.slice(-6)} · ${formatRupiah(order.total)}`;
+  document.getElementById('payDetailContent').innerHTML = `
+    <div class="proof-fullview">
+      <img src="${order.paymentProof}" alt="Bukti pembayaran">
+    </div>
+    <div class="proof-uploaded-at">Diupload: ${new Date(order.proofUploadedAt || order.createdAt).toLocaleString('id-ID')}</div>`;
+  document.getElementById('proofUploadBox').parentElement.style.display = 'none';
+  document.querySelector('#payDetailModal .form-btn').style.display = 'none';
+
+  document.getElementById('payDetailOverlay').classList.add('open');
+  requestAnimationFrame(() => document.getElementById('payDetailOverlay').classList.add('visible'));
+}
+
+async function uploadProofFromHistory(orderId) {
+  const allOrders = await dbGetAll('orders');
+  const order = allOrders.find(o => o.orderId === orderId);
+  if (!order) return;
+  await showPaymentDetail(orderId);
+}
+
 function closePayDetailModal() {
   document.getElementById('payDetailOverlay').classList.remove('visible');
-  setTimeout(() => document.getElementById('payDetailOverlay').classList.remove('open'), 280);
+  setTimeout(() => {
+    document.getElementById('payDetailOverlay').classList.remove('open');
+    resetProofUploadField();
+    document.getElementById('proofUploadBox').parentElement.style.display = 'block';
+    document.querySelector('#payDetailModal .form-btn').style.display = 'block';
+  }, 280);
 }
 
 async function confirmPaymentDone() {
   const orderId = document.getElementById('payDetailOverlay').dataset.orderId;
+  const allOrders = await dbGetAll('orders');
+  const order = allOrders.find(o => o.orderId === orderId);
+  if (order && uploadedProofBase64) {
+    order.paymentProof    = uploadedProofBase64;
+    order.proofUploadedAt = new Date().toISOString();
+    await saveOrderUpdate(order);
+  }
   closePayDetailModal();
-  showToast('✅ Terima kasih! Pembayaran sedang diverifikasi oleh penjual.');
+  if (uploadedProofBase64) {
+    showToast('✅ Bukti pembayaran terkirim! Sedang diverifikasi oleh penjual.');
+  } else {
+    showToast('✅ Terima kasih! Pembayaran sedang diverifikasi oleh penjual.');
+  }
   await renderHistoryList();
 }
 
