@@ -482,6 +482,23 @@
     <div class="modal-title" id="payDetailTitle">Detail Pembayaran</div>
     <div class="modal-sub" id="payDetailSub"></div>
     <div id="payDetailContent"></div>
+
+    <!-- Upload Bukti Pembayaran -->
+    <div class="proof-upload-section">
+      <label class="proof-upload-label">📎 Bukti Pembayaran (opsional, bisa upload sekarang atau nanti)</label>
+      <div class="proof-upload-box" id="proofUploadBox" onclick="document.getElementById('proofFileInput').click()">
+        <div id="proofUploadPlaceholder" class="proof-upload-placeholder">
+          <span class="proof-upload-icon">🧾</span>
+          <span>Klik untuk upload foto/screenshot bukti transfer</span>
+        </div>
+        <div id="proofPreviewWrap" class="proof-preview-wrap" style="display:none">
+          <img id="proofPreview" src="" alt="Bukti pembayaran">
+          <button type="button" class="proof-remove-btn" onclick="removeProofUpload(event)">✕ Hapus</button>
+        </div>
+      </div>
+      <input type="file" id="proofFileInput" accept="image/*" style="display:none" onchange="handleProofUpload(event)">
+    </div>
+
     <button class="form-btn" onclick="confirmPaymentDone()" style="margin-top:16px">✅ Saya Sudah Bayar</button>
   </div>
 </div>
