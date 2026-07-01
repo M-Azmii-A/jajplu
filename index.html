@@ -212,6 +212,7 @@
       <div class="form-group">
         <label>Password</label>
         <input type="password" id="regPassword" placeholder="Min. 6 karakter">
+        <small class="pass-hint">Wajib: huruf besar, huruf kecil, angka, & karakter spesial (contoh: Jajan@123)</small>
       </div>
       <div id="registerError" class="form-error"></div>
       <button class="form-btn" onclick="doRegister()">Buat Akun</button>
@@ -253,6 +254,7 @@
       <div class="form-group">
         <label>Password</label>
         <input type="password" id="sellerPassword" placeholder="Min. 6 karakter">
+        <small class="pass-hint">Wajib: huruf besar, huruf kecil, angka, & karakter spesial (contoh: Jajan@123)</small>
       </div>
       <div id="sellerError" class="form-error"></div>
       <button class="form-btn" onclick="doRegisterSeller()">Daftarkan Restoran</button>
@@ -331,6 +333,15 @@
 
     <!-- TAB: STATISTIK -->
     <div id="dashStatsTab" style="display:none">
+      <div class="laporan-filter">
+        <label class="laporan-period-label">Periode:</label>
+        <div class="laporan-period-opts">
+          <button class="period-btn active" onclick="setStatsPeriod('all',this)">Semua</button>
+          <button class="period-btn" onclick="setStatsPeriod('today',this)">Hari Ini</button>
+          <button class="period-btn" onclick="setStatsPeriod('week',this)">Seminggu</button>
+          <button class="period-btn" onclick="setStatsPeriod('month',this)">Sebulan</button>
+        </div>
+      </div>
       <div id="sellerStatsContent"></div>
     </div>
 
@@ -370,6 +381,7 @@
     <div class="form-group">
       <label>Password Baru <span style="color:var(--muted);font-weight:400">(kosongkan jika tidak ingin ubah)</span></label>
       <input type="password" id="profilePassword" placeholder="Min. 6 karakter">
+      <small class="pass-hint">Wajib: huruf besar, huruf kecil, angka, & karakter spesial (contoh: Jajan@123)</small>
     </div>
     <div id="profileError" class="form-error"></div>
     <button class="form-btn" onclick="saveProfile()">Simpan Perubahan</button>
