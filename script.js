@@ -167,6 +167,15 @@ function normalizePhone(raw) {
   return d;
 }
 function isValidPhone(p) { return /^62\d{8,13}$/.test(p); }
+
+function validatePasswordStrength(password) {
+  if (password.length < 6) return 'Password minimal 6 karakter.';
+  if (!/[a-z]/.test(password)) return 'Password harus mengandung huruf kecil.';
+  if (!/[A-Z]/.test(password)) return 'Password harus mengandung huruf besar.';
+  if (!/[0-9]/.test(password)) return 'Password harus mengandung angka.';
+  if (!/[^a-zA-Z0-9]/.test(password)) return 'Password harus mengandung karakter spesial (contoh: !@#$%).';
+  return null;
+}
 function displayPhone(p) {
   const local = (p || '').replace(/^62/, '');
   return '+62 ' + local.replace(/(\d{3,4})(\d{4})(\d{0,4})/, '$1-$2-$3').replace(/-$/, '');
@@ -521,7 +530,8 @@ async function doRegister() {
   const errEl    = document.getElementById('registerError');
   if (!name || !phone || !password) { errEl.textContent = 'Semua field wajib diisi.'; return; }
   if (!isValidPhone(phone))         { errEl.textContent = 'Format no. telepon tidak valid.'; return; }
-  if (password.length < 6)          { errEl.textContent = 'Password minimal 6 karakter.'; return; }
+  const passErr = validatePasswordStrength(password);
+  if (passErr)                      { errEl.textContent = passErr; return; }
   const existing = await dbGet('users', phone);
   if (existing) { errEl.textContent = 'No. telepon sudah terdaftar.'; return; }
   const newUser = { name, phone, password, role: 'buyer', address: '', createdAt: new Date().toISOString() };
@@ -541,7 +551,8 @@ async function doRegisterSeller() {
   const errEl    = document.getElementById('sellerError');
   if (!name || !resto || !cat || !phone || !password) { errEl.textContent = 'Semua field wajib diisi.'; return; }
   if (!isValidPhone(phone)) { errEl.textContent = 'Format no. telepon tidak valid.'; return; }
-  if (password.length < 6) { errEl.textContent = 'Password minimal 6 karakter.'; return; }
+  const passErr = validatePasswordStrength(password);
+  if (passErr)               { errEl.textContent = passErr; return; }
   const existing = await dbGet('users', phone);
   if (existing) { errEl.textContent = 'No. telepon sudah terdaftar.'; return; }
   const newUser = { name, phone, password, role: 'seller', restoName: resto, restoCat: cat, address: '', createdAt: new Date().toISOString() };
@@ -609,7 +620,10 @@ async function saveProfile() {
   const password = document.getElementById('profilePassword').value;
   const errEl    = document.getElementById('profileError');
   if (!name)                          { errEl.textContent = 'Nama tidak boleh kosong.'; return; }
-  if (password && password.length < 6) { errEl.textContent = 'Password baru minimal 6 karakter.'; return; }
+  if (password) {
+    const passErr = validatePasswordStrength(password);
+    if (passErr) { errEl.textContent = passErr; return; }
+  }
   currentUser.name    = name;
   currentUser.address = address;
   if (password) currentUser.password = password;
@@ -651,7 +665,12 @@ function switchDashTab(tab, el) {
   if (tab === 'menu')    { document.getElementById('dashMenuTab').style.display    = 'block'; renderSellerMenu(); }
   if (tab === 'add')     { document.getElementById('dashAddTab').style.display     = 'block'; resetImgUploadField(); }
   if (tab === 'orders')  { document.getElementById('dashOrdersTab').style.display  = 'block'; renderSellerOrders(); }
-  if (tab === 'stats')   { document.getElementById('dashStatsTab').style.display   = 'block'; renderSellerStats(); }
+  if (tab === 'stats')   {
+    document.getElementById('dashStatsTab').style.display   = 'block';
+    statsPeriod = 'all';
+    document.querySelectorAll('#dashStatsTab .period-btn').forEach((b,i) => b.classList.toggle('active', i===0));
+    renderSellerStats();
+  }
   if (tab === 'laporan') { document.getElementById('dashLaporanTab').style.display = 'block'; }
 }
 
@@ -808,10 +827,20 @@ async function advanceOrderStatus(orderId) {
 // ║            PENJUAL: STATISTIK PENJUALAN              ║
 // ╚══════════════════════════════════════════════════════╝
 
+let statsPeriod = 'all';
+
+function setStatsPeriod(period, el) {
+  statsPeriod = period;
+  document.querySelectorAll('#dashStatsTab .period-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  renderSellerStats();
+}
+
 async function renderSellerStats() {
   const el = document.getElementById('sellerStatsContent');
   const allOrders = await dbGetAll('orders');
-  const myOrders  = allOrders.filter(o => o.items && o.items.some(i => i.resto === currentUser.restoName));
+  let myOrders  = allOrders.filter(o => o.items && o.items.some(i => i.resto === currentUser.restoName));
+  myOrders = filterByPeriod(myOrders, statsPeriod);
 
   const totalOrders   = myOrders.length;
   const totalRevenue  = myOrders.filter(o => o.status === 'Selesai').reduce((s,o) => s+o.total, 0);
@@ -824,11 +853,18 @@ async function renderSellerStats() {
   }));
   const topMenus = Object.entries(menuCount).sort((a,b) => b[1]-a[1]).slice(0,5);
 
+  const periodLabels = { all:'Semua Waktu', today:'Hari Ini', week:'7 Hari Terakhir', month:'30 Hari Terakhir' };
+
+  if (myOrders.length === 0) {
+    el.innerHTML = `<div class="seller-empty">📊 Tidak ada data pesanan pada periode ${periodLabels[statsPeriod]}.</div>`;
+    return;
+  }
+
   el.innerHTML = `
     <div class="stats-grid">
       <div class="stat-card"><div class="stat-num">${totalOrders}</div><div class="stat-lbl">Total Pesanan</div></div>
       <div class="stat-card"><div class="stat-num">${totalItems}</div><div class="stat-lbl">Item Terjual</div></div>
-      <div class="stat-card" style="grid-column:1/-1"><div class="stat-num">${formatRupiah(totalRevenue)}</div><div class="stat-lbl">Total Pendapatan (Selesai)</div></div>
+      <div class="stat-card" style="grid-column:1/-1"><div class="stat-num">${formatRupiah(totalRevenue)}</div><div class="stat-lbl">Total Pendapatan (Selesai) · ${periodLabels[statsPeriod]}</div></div>
     </div>
     <div class="stats-section-title">🏆 Menu Terlaris</div>
     ${topMenus.length === 0 ? '<div class="seller-empty">Belum ada data penjualan.</div>' :
@@ -1178,16 +1214,17 @@ function setLaporanPeriod(period, el) {
   renderLaporan();
 }
 
-function filterByPeriod(orders) {
+function filterByPeriod(orders, period) {
+  period = period || laporanPeriod;
   const now = new Date();
-  if (laporanPeriod === 'all') return orders;
+  if (period === 'all') return orders;
   return orders.filter(o => {
     const d = new Date(o.createdAt);
-    if (laporanPeriod === 'today') {
+    if (period === 'today') {
       return d.toDateString() === now.toDateString();
-    } else if (laporanPeriod === 'week') {
+    } else if (period === 'week') {
       return (now - d) <= 7 * 24 * 60 * 60 * 1000;
-    } else if (laporanPeriod === 'month') {
+    } else if (period === 'month') {
       return (now - d) <= 30 * 24 * 60 * 60 * 1000;
     }
     return true;
