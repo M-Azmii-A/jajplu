@@ -666,3 +666,11 @@ footer { background: var(--surface); border-top: 1px solid var(--border); paddin
 }
 .proof-fullview img { width: 100%; max-height: 360px; object-fit: contain; display: block; }
 .proof-uploaded-at { font-size: .75rem; color: var(--muted); text-align: center; }
+
+/* =====================
+   PASSWORD HINT
+   ===================== */
+.pass-hint {
+  display: block; margin-top: 6px; font-size: .72rem; color: var(--muted);
+  line-height: 1.4;
+}
